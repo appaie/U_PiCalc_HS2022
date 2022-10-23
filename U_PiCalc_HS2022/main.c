@@ -41,10 +41,12 @@ int main(void)
 	xTaskCreate( controllerTask, (const char *) "control_tsk", configMINIMAL_STACK_SIZE+150, NULL, 3, NULL);
 
 	vDisplayClear();
-	vDisplayWriteStringAtPos(0,0,"PI-Calc HS2022");
+	vDisplayWriteStringAtPos(0,0,"PI-CALC V1.0");
+	vDisplayWriteStringAtPos(1,0,"MODE: IDLE");
 	
 	vTaskStartScheduler();
 	return 0;
+
 }
 
 void controllerTask(void* pvParameters) {
@@ -54,7 +56,7 @@ void controllerTask(void* pvParameters) {
 		if(getButtonPress(BUTTON1) == SHORT_PRESSED) {
 			char pistring[12];
 			sprintf(&pistring[0], "PI: %.8f", M_PI);
-			vDisplayWriteStringAtPos(1,0, "%s", pistring);
+			vDisplayWriteStringAtPos(3,0, "%s", pistring);
 		}
 		if(getButtonPress(BUTTON2) == SHORT_PRESSED) {
 			
@@ -80,3 +82,49 @@ void controllerTask(void* pvParameters) {
 		vTaskDelay(10/portTICK_RATE_MS);
 	}
 }
+
+void leibniztask(void* pvParameters) {
+	float pi4 = 1;
+	float pi = 0;
+	uint32_t n = 3;
+	for(;;){
+		pi4 = pi4 -1.0/n + 1.0/(n+2);
+		n = n+4;
+		int piCalculatet;
+		piCalculatet = pi4 * 4;
+		
+	}
+}
+
+
+/* Function to calculate PI
+double calculatePI(double PI, double n,
+double sign)
+{
+	// Add for 1000000 terms
+	for (int i = 0; i <= 1000000; i++) {
+		PI = PI + (sign * (4 / ((n) * (n + 1)
+		* (n + 2))));
+		
+		// Addition and subtraction
+		// of alternate sequences
+		sign = sign * (-1);
+		
+		// Increment by 2 according to formula
+		n += 2;
+	}
+	
+	// Return the value of Pi
+	return PI;
+}
+
+// Driver code
+//void main()
+//{
+	
+	// Initialize sum=3, n=2, and sign=1
+	//double PI = 3, n = 2, sign = 1;
+	
+	// Function call
+	//printf("The approximation of Pi is %0.8lf\n",calculatePI(PI, n, sign));
+} */
