@@ -72,7 +72,7 @@ int main(void)
 	xTaskCreate(vTimerTask, (const char *) "time_tsk", configMINIMAL_STACK_SIZE, NULL, 2, &time);						
 	
 	vDisplayClear();
-	vDisplayWriteStringAtPos(0,0,"PI-Calc V1.5");
+	vDisplayWriteStringAtPos(0,0,"PI-Calc V2.0");
 	vDisplayWriteStringAtPos(1,0,"appaie TS TSE 2009");
 	vDisplayWriteStringAtPos(2,0,"Leibniz|Nilkantha");
 	vDisplayWriteStringAtPos(3,0,"start|n/a|n/a|n/a");																		
@@ -104,8 +104,8 @@ void vDisplayTask(void* pvParameters)
 		xEventGroupSetBits(egEventBits, BREAK);
 													
 		vDisplayClear();															
-		vDisplayWriteStringAtPos(0,0,"Mode: %s", Algorithm);							
-		vDisplayWriteStringAtPos(1,0,"Time: %dms", lot);					
+		vDisplayWriteStringAtPos(0,0,"Mode: %s", Algorithm);
+		vDisplayWriteStringAtPos(1,0,"Zeit bis Pi: %ds", dauer/1000);					
 		vDisplayWriteStringAtPos(2,0, "PI: %s", piact);								
 		vDisplayWriteStringAtPos(3,0, "play|stp|reset|swtch");
 									
@@ -251,4 +251,6 @@ void vNilkanthaTask(void* pvParameters)											//one of the fastest series to
 		}
 	}
 }
+
+
 
