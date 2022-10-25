@@ -31,13 +31,13 @@ void vNilakanthaTask(void* pvParameters);
 #include "event_groups.h"
 
 EventGroupHandle_t egEventBits = NULL;
-#define STRTSTP			0x01
-#define RESET			0x02
-#define	COMBINE			0x04
-#define LEVEL			0x08
-#define BREAK			0x10
-#define ALGO			0x40
-#define BUTTON			0xFF
+#define STRTSTP			0x01		//start calc on Button1 stop calc on Button 2
+#define RESET			0x02		//Reset calc and time
+#define	COMBINE			0x04		//Combine calc Pi strings
+#define LEVEL			0x08		//Read out Leveling of Pi
+#define BREAK			0x10		//Reset BreakBit for read off
+#define ALGO			0x40		//Switch for either Leibniz or Nilakantha
+#define BUTTON			0xFF		//Buttons used 1, 2, 3, 4
 
 
 #include "stack_macros.h"
@@ -65,12 +65,14 @@ int main(void)
 	vInitClock();
 	vInitDisplay();
 	
+	//Task erstellen
 	xTaskCreate(vControllerTask, (const char *) "control_tsk", configMINIMAL_STACK_SIZE+150, NULL, 3, NULL);			
 	xTaskCreate(vDisplayTask, (const char *) "display_tsk", configMINIMAL_STACK_SIZE+100, NULL, 1, NULL);				
 	xTaskCreate(vLeibnizTask, (const char *) "leibniz_tsk", configMINIMAL_STACK_SIZE, NULL, 0, &leibniz);				
 	xTaskCreate(vNilakanthaTask, (const char *) "nilakantha_tsk", configMINIMAL_STACK_SIZE, NULL, 0, &nilakantha);				
 	xTaskCreate(vTimerTask, (const char *) "time_tsk", configMINIMAL_STACK_SIZE, NULL, 2, &time);						
 	
+	//Standart Ausgabe bei Start von Board
 	vDisplayClear();
 	vDisplayWriteStringAtPos(0,0,"PI-Calc V2.0");
 	vDisplayWriteStringAtPos(1,0,"appaie TS TSE 2009");
@@ -88,7 +90,7 @@ void vDisplayTask(void* pvParameters)
 	char Algorithm[15] = "";
 	for (;;)
 	{
-		xEventGroupClearBits(egEventBits, BREAK);											
+		xEventGroupClearBits(egEventBits, BREAK);									
 		xEventGroupWaitBits(egEventBits, COMBINE, false, true, portMAX_DELAY);			
 		if (xEventGroupGetBits(egEventBits) & ALGO)
 		{
