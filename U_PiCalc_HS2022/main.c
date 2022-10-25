@@ -24,7 +24,7 @@ void vDisplayTask(void* pvParameters);
 void vTimerTask(void* pvParameters);
 void vControllerTask(void* pvParameters);
 void vLeibnizTask(void* pvParameters);
-void vNilkanthaTask(void* pvParameters);
+void vNilakanthaTask(void* pvParameters);
 
 
 #include "queue.h"
@@ -33,8 +33,8 @@ void vNilkanthaTask(void* pvParameters);
 EventGroupHandle_t egEventBits = NULL;
 #define STRTSTP			0x01
 #define RESET			0x02
-#define	COLLECT			0x04
-#define EVEN			0x08
+#define	COMBINE			0x04
+#define LEVEL			0x08
 #define BREAK			0x10
 #define ALGO			0x40
 #define BUTTON			0xFF
@@ -52,7 +52,7 @@ EventGroupHandle_t egEventBits = NULL;
 #include "ButtonHandler.h"
 
 TaskHandle_t	leibniz;
-TaskHandle_t	nilkantha;
+TaskHandle_t	nilakantha;
 TaskHandle_t	time;
 
 uint16_t lot = 0;				//unsigned integer 16bit = lenght of time
@@ -68,13 +68,13 @@ int main(void)
 	xTaskCreate(vControllerTask, (const char *) "control_tsk", configMINIMAL_STACK_SIZE+150, NULL, 3, NULL);			
 	xTaskCreate(vDisplayTask, (const char *) "display_tsk", configMINIMAL_STACK_SIZE+100, NULL, 1, NULL);				
 	xTaskCreate(vLeibnizTask, (const char *) "leibniz_tsk", configMINIMAL_STACK_SIZE, NULL, 0, &leibniz);				
-	xTaskCreate(vNilkanthaTask, (const char *) "nilkantha_tsk", configMINIMAL_STACK_SIZE, NULL, 0, &nilkantha);				
+	xTaskCreate(vNilakanthaTask, (const char *) "nilakantha_tsk", configMINIMAL_STACK_SIZE, NULL, 0, &nilakantha);				
 	xTaskCreate(vTimerTask, (const char *) "time_tsk", configMINIMAL_STACK_SIZE, NULL, 2, &time);						
 	
 	vDisplayClear();
 	vDisplayWriteStringAtPos(0,0,"PI-Calc V2.0");
 	vDisplayWriteStringAtPos(1,0,"appaie TS TSE 2009");
-	vDisplayWriteStringAtPos(2,0,"Leibniz|Nilkantha");
+	vDisplayWriteStringAtPos(2,0,"Leibniz|Nilakantha");
 	vDisplayWriteStringAtPos(3,0,"start|n/a|n/a|n/a");																		
 	vTaskStartScheduler();																	
 	return 0;
@@ -89,18 +89,18 @@ void vDisplayTask(void* pvParameters)
 	for (;;)
 	{
 		xEventGroupClearBits(egEventBits, BREAK);											
-		xEventGroupWaitBits(egEventBits, COLLECT, false, true, portMAX_DELAY);			
+		xEventGroupWaitBits(egEventBits, COMBINE, false, true, portMAX_DELAY);			
 		if (xEventGroupGetBits(egEventBits) & ALGO)
 		{
 			sprintf(Algorithm,"%.12s","Leibniz");
 		}
 		else
 		{
-			sprintf(Algorithm,"%.12s","Nilkantha");
+			sprintf(Algorithm,"%.12s","Nilakantha");
 		}
 		sprintf(piact,"%.7f",pi);
 																
-		xEventGroupClearBits(egEventBits, COLLECT);								
+		xEventGroupClearBits(egEventBits, COMBINE);								
 		xEventGroupSetBits(egEventBits, BREAK);
 													
 		vDisplayClear();															
@@ -132,7 +132,7 @@ void vControllerTask(void* pvParameters)
 		if(getButtonPress(BUTTON1) == SHORT_PRESSED)
 		{									
 			xEventGroupSetBits(egEventBits, STRTSTP);									
-			xEventGroupClearBits(egEventBits, EVEN);										
+			xEventGroupClearBits(egEventBits, LEVEL);										
 			vTaskResume(time);
 		}
 		if(getButtonPress(BUTTON2) == SHORT_PRESSED)
@@ -143,25 +143,25 @@ void vControllerTask(void* pvParameters)
 		{																					
 			pi = 1;																			
 			xEventGroupSetBits(egEventBits, RESET);
-			xEventGroupClearBits(egEventBits, EVEN);
+			xEventGroupClearBits(egEventBits, LEVEL);
 			lot = 0;																		
 			vTaskResume(time);
 		}
 		if(getButtonPress(BUTTON4) == SHORT_PRESSED)
 		{																					
 			xEventGroupSetBits(egEventBits, RESET);								
-			xEventGroupClearBits(egEventBits, EVEN);
+			xEventGroupClearBits(egEventBits, LEVEL);
 			
 			eTaskState state = eTaskGetState(leibniz);									
 			if(state == eSuspended)
 			{
-				vTaskSuspend(nilkantha);
+				vTaskSuspend(nilakantha);
 				vTaskResume(leibniz);
 			}
 			else
 			{
 				vTaskSuspend(leibniz);
-				vTaskResume(nilkantha);
+				vTaskResume(nilakantha);
 			}
 			lot = 0;																		
 			vTaskResume(time);
@@ -188,7 +188,7 @@ void vLeibnizTask(void* pvParameters)
 			xEventGroupSetBits(egEventBits, ALGO);								
 			xEventGroupClearBits(egEventBits, 0x03);										
 			pi = 1;
-			xEventGroupSetBits(egEventBits, COLLECT);
+			xEventGroupSetBits(egEventBits, COMBINE);
 		}
 		if(xEventGroupGetBits(egEventBits) & STRTSTP)
 		{
@@ -202,22 +202,22 @@ void vLeibnizTask(void* pvParameters)
 			}
 			else
 			{
-				xEventGroupSetBits(egEventBits, COLLECT);									
+				xEventGroupSetBits(egEventBits, COMBINE);									
 			}
 		}
 		compare = pi * 100000;															
 		if (compare == pisix)
 		{
-			xEventGroupSetBits(egEventBits,EVEN);										
+			xEventGroupSetBits(egEventBits,LEVEL);										
 		}
 	}
 }
 
-//Nilkantha Function
+//Nilakantha Function
 
-void vNilkanthaTask(void* pvParameters)											//one of the fastest series to calculate PI		//https://www.hackster.io/momososo/nilakantha-series-89e939
+void vNilakanthaTask(void* pvParameters)											//one of the fastest series to calculate PI		//https://www.hackster.io/momososo/nilakantha-series-89e939
 {																				//https://www.geeksforgeeks.org/calculate-pi-using-nilkanthas-series/
-	vTaskSuspend(nilkantha);
+	vTaskSuspend(nilakantha);
 	/*double Pi = 0;*/
 	float PIH = 0;
 	double n = 2;
@@ -233,7 +233,7 @@ void vNilkanthaTask(void* pvParameters)											//one of the fastest series to
 			xEventGroupClearBits(egEventBits, ALGO);									
 			xEventGroupClearBits(egEventBits, 0x03);									
 			pi = 1;
-			xEventGroupSetBits(egEventBits, COLLECT);									
+			xEventGroupSetBits(egEventBits, COMBINE);									
 		}
 		if(xEventGroupGetBits(egEventBits) & STRTSTP)
 		{
@@ -246,15 +246,15 @@ void vNilkanthaTask(void* pvParameters)											//one of the fastest series to
 			}
 			else
 			{
-				xEventGroupSetBits(egEventBits, COLLECT);
+				xEventGroupSetBits(egEventBits, COMBINE);
 			}
 		}
 		compare = pi * 100000;
-		vTaskDelay(10);															//because of Nilkantha is so efficient the Timer Frequency doesnt keep up with the speet of wich PI is calculated    //thats why i put a delay inside, evade Idea create Counter that counts how many times the delay(100) is used and after the calculation is done subtract the counted run through
+		vTaskDelay(10);															//because of Nilakantha is so efficient the Timer Frequency doesnt keep up with the speet of wich PI is calculated    //thats why i put a delay inside, evade Idea create Counter that counts how many times the delay(100) is used and after the calculation is done subtract the counted run through
 		
 		if (compare == pisix)
 		{
-			xEventGroupSetBits(egEventBits,EVEN);
+			xEventGroupSetBits(egEventBits,LEVEL);
 		}
 	}
 }
@@ -302,7 +302,7 @@ void vTimerTask(void* pvParameters)
 		}
 		stp = xTaskGetTickCountFromISR();
 		lot = stp - strt - pause;
-		if (xEventGroupGetBits(egEventBits) & EVEN)
+		if (xEventGroupGetBits(egEventBits) & LEVEL)
 		{
 			strt = 0;
 			stp = 0;
