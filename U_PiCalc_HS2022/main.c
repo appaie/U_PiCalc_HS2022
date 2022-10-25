@@ -105,7 +105,14 @@ void vDisplayTask(void* pvParameters)
 													
 		vDisplayClear();															
 		vDisplayWriteStringAtPos(0,0,"Mode: %s", Algorithm);
-		vDisplayWriteStringAtPos(1,0,"Zeit bis Pi: %ds", dauer/1000);					
+		if (xEventGroupGetBits(egEventBits) & ALGO)
+		{
+			vDisplayWriteStringAtPos(1,0,"Time: %ds", lot/1000);
+		}
+		else
+		{
+			vDisplayWriteStringAtPos(1,0,"Time: %dms", lot);
+		}					
 		vDisplayWriteStringAtPos(2,0, "PI: %s", piact);								
 		vDisplayWriteStringAtPos(3,0, "play|stp|reset|swtch");
 									
@@ -252,5 +259,73 @@ void vNilkanthaTask(void* pvParameters)											//one of the fastest series to
 	}
 }
 
+//Timer Function
 
+void vTimerTask(void* pvParameters)
+{
+	TickType_t xLastWakeTime;
+	const TickType_t xFrequency = 10;
+	xLastWakeTime = xTaskGetTickCount();
+	uint16_t strt = 0;
+	uint16_t stp = 0;
+	uint16_t pause = 0;
+	uint16_t pause1 = 0;
+	uint16_t pause10 = 0;
+	int help = 0;
+	for (;;)
+	{
+		vTaskDelayUntil(&xLastWakeTime, xFrequency);
+		lot = 0;
+		if (strt == 0) {
+			xEventGroupWaitBits(egEventBits, STRTSTP, false, true, portMAX_DELAY);
+			strt = xTaskGetTickCountFromISR();
+			pause = 0;
+		}
+		if ((xEventGroupGetBits(egEventBits) & STRTSTP) != 1)
+		{
+			if (pause1 == 0)
+			{
+				pause1 = xTaskGetTickCountFromISR();
+				help = 1;
+			}
+		}
+		if (help == 1)
+		{
+			if ((xEventGroupGetBits(egEventBits) & STRTSTP))
+			{
+				pause10 = xTaskGetTickCountFromISR();
+				pause = pause10 - pause1 + pause;
+				help = 0;
+				pause1 = 0;
+				pause10 = 0;
+			}
+		}
+		stp = xTaskGetTickCountFromISR();
+		lot = stp - strt - pause;
+		if (xEventGroupGetBits(egEventBits) & EVEN)
+		{
+			strt = 0;
+			stp = 0;
+			pause = 0;
+			pause1 = 0;
+			pause10 = 0;
+			vTaskSuspend(time);
+		}
+		else if (xEventGroupGetBits(egEventBits) & RESET)
+		{
+			strt = 0;
+			stp = 0;
+			pause = 0;
+			pause1 = 0;
+			pause10 = 0;
+			help = 0;
+			lot = 0;
+			vTaskSuspend(time);
+		}
+		else
+		{
+			
+		}
+	}
+}
 
